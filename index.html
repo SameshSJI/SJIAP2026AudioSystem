@@ -10,10 +10,17 @@
   button { margin: 5px; }
   .track { cursor: pointer; margin: 2px 0; }
   .current { font-weight: bold; }
+  #loadingContainer { width:300px; border:1px solid #333; margin-bottom:10px; }
+  #loadingBar { width:0%; height:20px; background:#4caf50; }
 </style>
 </head>
 <body>
 <h1>Audio Playlist</h1>
+
+<div id="loadingContainer">
+  <div id="loadingBar"></div>
+</div>
+<span id="loadingText">Loading 0%</span>
 
 <div id="controls">
   <button id="prev">⏮️ Prev (←)</button>
@@ -89,6 +96,8 @@ let repeatMode = "off";
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
+const loadingBar = document.getElementById("loadingBar");
+const loadingText = document.getElementById("loadingText");
 
 // --- CREATE PLAYLIST UI ---
 tracks.forEach((track, i) => {
@@ -97,6 +106,22 @@ tracks.forEach((track, i) => {
   li.classList.add("track");
   li.addEventListener("click", () => { playTrack(i); });
   playlistEl.appendChild(li);
+});
+
+// --- LOADING BAR ---
+let loadedCount = 0;
+tracks.forEach(track => {
+  let counted = false;
+  track.addEventListener("canplaythrough", () => {
+    if(!counted){
+      counted = true;
+      loadedCount++;
+      const percent = Math.min(100, Math.floor((loadedCount / tracks.length) * 100));
+      loadingBar.style.width = percent + "%";
+      loadingText.textContent = `Loading ${percent}%`;
+      if(percent === 100) loadingText.textContent = "All tracks loaded!";
+    }
+  });
 });
 
 // --- PLAY/PAUSE & HIGHLIGHT ---
@@ -149,15 +174,20 @@ document.getElementById("theme").onclick = function() {
 // --- SEEK & PROGRESS ---
 function updateTime(){
   const audio = tracks[currentTrack];
-  seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
-  const minCur = Math.floor(audio.currentTime/60);
-  const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
-  const minDur = Math.floor(audio.duration/60)||0;
-  const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
-  timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
+  if(audio.duration){ // only if metadata loaded
+    seekEl.value = (audio.currentTime/audio.duration)*100;
+    const minCur = Math.floor(audio.currentTime/60);
+    const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
+    const minDur = Math.floor(audio.duration/60);
+    const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
+    timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
+  }
 }
 setInterval(updateTime,200);
-seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
+seekEl.oninput = () => {
+  const audio = tracks[currentTrack];
+  if(audio.duration){ audio.currentTime = (seekEl.value/100)*audio.duration; }
+};
 
 // --- VOLUME + MUTE ---
 const volumeEl = document.getElementById("volume");
