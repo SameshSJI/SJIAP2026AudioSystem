@@ -39,30 +39,30 @@ const password = "SJIUG2026!";
 let entered = prompt("Enter password:");
 if(entered !== password) { alert("Incorrect password!"); document.body.innerHTML="Access denied"; throw "Access denied"; }
 
-// Track data
+// Track data with corrected folder case
 const tracksData = [
-  {src:"audio/0_Right_Marker_March_in.mp3", title:"(0) Right Marker March in"},
-  {src:"audio/1_Supporting_Contingent_March_in.mp3", title:"(1) Supporting Contingent March in"},
-  {src:"audio/2_Commander_march_in_front.mp3", title:"(2) Commander march in front"},
-  {src:"audio/3_Right_dressing.mp3", title:"(3) Right dressing"},
-  {src:"audio/4_School_Rally_GOH_march_in.mp3", title:"(4) School Rally (GOH march in)"},
-  {src:"audio/5_16_beat_drum_roll_GOH_Fan_out.mp3", title:"(5) 16 beat drum roll (GOH Fan out)"},
-  {src:"audio/6_Right_dressing.mp3", title:"(6) Right dressing"},
-  {src:"audio/7_Fanfare_Arrival_of_Reviewing_Officer.mp3", title:"(7) Fanfare (Arrival of Reviewing Officer)"},
-  {src:"audio/8_Salute_No7_Hormat_Reviewing_Officer.mp3", title:"(8) Salute No.7 (Hormat Reviewing Officer)"},
-  {src:"audio/9_Inspection_of_GOH.mp3", title:"(9) Inspection of GOH"},
-  {src:"audio/10_Commander_march_in_front.mp3", title:"(10) Commander march in front"},
-  {src:"audio/11_48_rolls.mp3", title:"(11) 48 rolls"},
-  {src:"audio/12_TENTERA_SINGAPURA_March_Past.mp3", title:"(12) TENTERA SINGAPURA (March Past)"},
-  {src:"audio/12A_March_Past_2_Rally.mp3", title:"(12A) March Past 2 (Rally)"},
-  {src:"audio/13_Commander_march_in_front.mp3", title:"(13) Commander march in front"},
-  {src:"audio/14_Right_dressing.mp3", title:"(14) Right dressing"},
-  {src:"audio/15_Sunset_Flag_Lowering.mp3", title:"(15) Sunset (Flag Lowering)"},
-  {src:"audio/16_Auld_Lang_Syne.mp3", title:"(16) Auld Lang Syne"}
+  {src:"Audio/0_Right_Marker_March_in.mp3", title:"(0) Right Marker March in"},
+  {src:"Audio/1_Supporting_Contingent_March_in.mp3", title:"(1) Supporting Contingent March in"},
+  {src:"Audio/2_Commander_march_in_front.mp3", title:"(2) Commander march in front"},
+  {src:"Audio/3_Right_dressing.mp3", title:"(3) Right dressing"},
+  {src:"Audio/4_School_Rally_GOH_march_in.mp3", title:"(4) School Rally (GOH march in)"},
+  {src:"Audio/5_16_beat_drum_roll_GOH_Fan_out.mp3", title:"(5) 16 beat drum roll (GOH Fan out)"},
+  {src:"Audio/6_Right_dressing.mp3", title:"(6) Right dressing"},
+  {src:"Audio/7_Fanfare_Arrival_of_Reviewing_Officer.mp3", title:"(7) Fanfare (Arrival of Reviewing Officer)"},
+  {src:"Audio/8_Salute_No7_Hormat_Reviewing_Officer.mp3", title:"(8) Salute No.7 (Hormat Reviewing Officer)"},
+  {src:"Audio/9_Inspection_of_GOH.mp3", title:"(9) Inspection of GOH"},
+  {src:"Audio/10_Commander_march_in_front.mp3", title:"(10) Commander march in front"},
+  {src:"Audio/11_48_rolls.mp3", title:"(11) 48 rolls"},
+  {src:"Audio/12_TENTERA_SINGAPURA_March_Past.mp3", title:"(12) TENTERA SINGAPURA (March Past)"},
+  {src:"Audio/12A_March_Past_2_Rally.mp3", title:"(12A) March Past 2 (Rally)"},
+  {src:"Audio/13_Commander_march_in_front.mp3", title:"(13) Commander march in front"},
+  {src:"Audio/14_Right_dressing.mp3", title:"(14) Right dressing"},
+  {src:"Audio/15_Sunset_Flag_Lowering.mp3", title:"(15) Sunset (Flag Lowering)"},
+  {src:"Audio/16_Auld_Lang_Syne.mp3", title:"(16) Auld Lang Syne"}
 ];
 
 let currentTrack = 0;
-let repeatMode = "off"; // off, single, all
+let repeatMode = "off";
 const audio = new Audio();
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
@@ -101,7 +101,7 @@ document.getElementById("prev").onclick = () => { currentTrack = (currentTrack-1
 document.getElementById("next").onclick = () => { currentTrack = (currentTrack+1)%tracksData.length; playTrack(currentTrack); };
 
 // Repeat toggle
-document.getElementById("repeat").onclick = () => {
+document.getElementById("repeat").onclick = function() {
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off"; }
