@@ -8,66 +8,70 @@
   /* --- BODY & THEME --- */
   body {
     font-family: Arial, sans-serif;
-    background: #fefefe;
-    color: #333;
+    background: #e8f5e9; /* light green */
+    color: #1b5e20; /* dark green text */
     margin: 20px;
   }
-
   .dark {
-    background: #222;
-    color: #eee;
+    background: #1b5e20;
+    color: #e8f5e9;
   }
 
   /* --- BUTTONS --- */
   button {
     margin: 5px;
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    background: #f0f0f0;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
+    background-color: #43a047; /* green */
+    color: white;
+    font-weight: bold;
+    transition: background 0.2s;
   }
-
   button:hover {
-    background: #e0e0e0;
+    background-color: #2e7d32; /* darker green */
   }
 
-  /* --- PLAYLIST --- */
+  /* --- TRACKLIST --- */
   #playlist {
     max-height: 250px;
     overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 5px;
+    border-radius: 8px;
+    padding: 10px;
     margin-top: 10px;
-    scroll-behavior: smooth;
+    background: #a5d6a7; /* light green playlist */
+    border: 1px solid #388e3c;
   }
-
   .track {
     cursor: pointer;
-    margin: 2px 0;
-    padding: 2px 5px;
-    border-radius: 3px;
+    margin: 4px 0;
+    padding: 4px 6px;
+    border-radius: 4px;
   }
-
   .track:hover {
-    background: #f0f8ff;
+    background-color: #66bb6a;
   }
-
   .current {
     font-weight: bold;
-    background: #d0f0ff;
+    background-color: #388e3c;
+    color: #e8f5e9;
+    padding: 4px 6px;
+    border-radius: 4px;
   }
 
-  /* --- MOBILE BUTTON ADJUSTMENTS --- */
-  @media(max-width: 480px) {
-    button {
-      font-size: 16px;
-      padding: 10px 14px;
-    }
-    #seek {
-      width: 100%;
-    }
+  /* --- RANGE SLIDERS --- */
+  input[type="range"] {
+    vertical-align: middle;
+    margin: 0 5px;
+  }
+
+  /* --- MOBILE RESPONSIVE --- */
+  @media(max-width: 600px){
+    #controls { font-size: 14px; }
+    button { padding: 4px 8px; font-size: 14px; }
+    #seek { width: 200px; }
+    #playlist { max-height: 180px; }
   }
 </style>
 </head>
@@ -81,10 +85,10 @@
   <button id="next">⏭️ Next (→)</button>
   Repeat: <button id="repeat">Off (R)</button>
   <button id="theme">☀️ Light Mode (T)</button>
-  <br>
-  Seek: <input type="range" id="seek" value="0" min="0" max="100" style="width: 300px;">
+  <br><br>
+  Seek: <input type="range" id="seek" value="0" min="0" max="100">
   <span id="time">0:00 / 0:00</span>
-  <br>
+  <br><br>
   Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
@@ -92,7 +96,7 @@
 <ul id="playlist"></ul>
 
 <script>
-/* --- TRACK SETUP --- */
+// --- TRACK SETUP ---
 const baseURL = "./Audio/";
 const trackFiles = [
   "0_Right_Marker_March_in.mp3",
@@ -114,7 +118,6 @@ const trackFiles = [
   "15_Sunset_Flag_Lowering.mp3",
   "16_Auld_Lang_Syne.mp3"
 ];
-
 const trackTitles = [
   "(0) Right Marker March in",
   "(1) Supporting Contingent March in",
@@ -136,9 +139,10 @@ const trackTitles = [
   "(16) Auld Lang Syne"
 ];
 
+// --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "metadata"; // preload metadata only
+  audio.preload = "auto"; // preload full audio for faster playback
   return audio;
 });
 
@@ -149,23 +153,22 @@ const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 
-/* --- CREATE PLAYLIST --- */
+// --- CREATE PLAYLIST UI ---
 tracks.forEach((track, i) => {
   const li = document.createElement("li");
   li.textContent = trackTitles[i];
   li.classList.add("track");
-  li.addEventListener("click", () => playTrack(i));
+  li.addEventListener("click", () => { playTrack(i); });
   playlistEl.appendChild(li);
 });
 
-/* --- HIGHLIGHT --- */
+// --- PLAY/PAUSE & HIGHLIGHT ---
 function highlight() {
-  document.querySelectorAll(".track").forEach((el,i)=>{
+  document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
-/* --- PLAY/PAUSE --- */
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -187,26 +190,26 @@ function updatePlayPauseButton(){
   btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
 }
 
-/* --- CONTROLS --- */
+// --- CONTROLS ---
 document.getElementById("playPause").onclick = togglePlayPause;
 document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
-/* --- REPEAT --- */
+// --- REPEAT ---
 document.getElementById("repeat").onclick = function(){
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-/* --- THEME --- */
+// --- LIGHT/DARK MODE ---
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
   this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-/* --- SEEK & TIME --- */
+// --- SEEK & PROGRESS ---
 function updateTime(){
   const audio = tracks[currentTrack];
   seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
@@ -219,7 +222,7 @@ function updateTime(){
 setInterval(updateTime,200);
 seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
 
-/* --- VOLUME & MUTE --- */
+// --- VOLUME + MUTE ---
 const volumeEl = document.getElementById("volume");
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
@@ -229,9 +232,9 @@ function toggleMute(){
 }
 document.getElementById("muteUnmute").onclick = toggleMute;
 
-/* --- AUTO NEXT --- */
-tracks.forEach(track=>{
-  track.addEventListener("ended",()=>{
+// --- AUTO NEXT ---
+tracks.forEach(track => {
+  track.addEventListener("ended", () => {
     if(repeatMode==="single"){ playTrack(currentTrack); }
     else if(currentTrack<tracks.length-1){ playTrack(currentTrack+1); }
     else if(repeatMode==="all"){ playTrack(0); }
@@ -239,11 +242,11 @@ tracks.forEach(track=>{
   });
 });
 
-/* --- START FIRST TRACK --- */
+// --- START FIRST TRACK ---
 playTrack(0);
 
-/* --- KEYBOARD SHORTCUTS --- */
-document.addEventListener("keydown",(e)=>{
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener("keydown", (e) => {
   switch(e.key){
     case " ": togglePlayPause(); e.preventDefault(); break;
     case "ArrowLeft": document.getElementById("prev").click(); break;
