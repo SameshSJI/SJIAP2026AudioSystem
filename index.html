@@ -5,27 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Audio Playlist</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #fefefe; color: #333; margin: 20px; }
-  .dark { background: #222; color: #eee; }
-  button { margin: 5px; }
-  #controls { margin-bottom: 10px; }
-  
-  /* Scrollable playlist section */
-  #playlist-container {
-    max-height: 300px;        /* Adjust height as needed */
+  /* --- BODY & THEME --- */
+  body {
+    font-family: Arial, sans-serif;
+    background: #fefefe;
+    color: #333;
+    margin: 20px;
+  }
+
+  .dark {
+    background: #222;
+    color: #eee;
+  }
+
+  /* --- BUTTONS --- */
+  button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  button:hover {
+    background: #e0e0e0;
+  }
+
+  /* --- PLAYLIST --- */
+  #playlist {
+    max-height: 250px;
     overflow-y: auto;
     border: 1px solid #ccc;
     padding: 5px;
-    background: #f9f9f9;
+    margin-top: 10px;
     scroll-behavior: smooth;
   }
-  .track { padding: 5px; cursor: pointer; }
-  .track.current { font-weight: bold; }
-  
-  /* Mobile adjustments */
-  @media (max-width: 600px) {
-    button { font-size: 14px; padding: 8px; }
-    #seek { width: 100%; }
+
+  .track {
+    cursor: pointer;
+    margin: 2px 0;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+
+  .track:hover {
+    background: #f0f8ff;
+  }
+
+  .current {
+    font-weight: bold;
+    background: #d0f0ff;
+  }
+
+  /* --- MOBILE BUTTON ADJUSTMENTS --- */
+  @media(max-width: 480px) {
+    button {
+      font-size: 16px;
+      padding: 10px 14px;
+    }
+    #seek {
+      width: 100%;
+    }
   }
 </style>
 </head>
@@ -47,12 +89,10 @@
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
 
-<div id="playlist-container">
-  <ul id="playlist"></ul>
-</div>
+<ul id="playlist"></ul>
 
 <script>
-// --- TRACKS SETUP ---
+/* --- TRACK SETUP --- */
 const baseURL = "./Audio/";
 const trackFiles = [
   "0_Right_Marker_March_in.mp3",
@@ -74,6 +114,7 @@ const trackFiles = [
   "15_Sunset_Flag_Lowering.mp3",
   "16_Auld_Lang_Syne.mp3"
 ];
+
 const trackTitles = [
   "(0) Right Marker March in",
   "(1) Supporting Contingent March in",
@@ -95,10 +136,9 @@ const trackTitles = [
   "(16) Auld Lang Syne"
 ];
 
-// --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "metadata";
+  audio.preload = "metadata"; // preload metadata only
   return audio;
 });
 
@@ -109,22 +149,23 @@ const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 
-// --- CREATE PLAYLIST UI ---
+/* --- CREATE PLAYLIST --- */
 tracks.forEach((track, i) => {
   const li = document.createElement("li");
   li.textContent = trackTitles[i];
   li.classList.add("track");
-  li.addEventListener("click", () => { playTrack(i); });
+  li.addEventListener("click", () => playTrack(i));
   playlistEl.appendChild(li);
 });
 
-// --- PLAY/PAUSE & HIGHLIGHT ---
+/* --- HIGHLIGHT --- */
 function highlight() {
-  document.querySelectorAll(".track").forEach((el, i) => {
+  document.querySelectorAll(".track").forEach((el,i)=>{
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
+/* --- PLAY/PAUSE --- */
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -146,26 +187,26 @@ function updatePlayPauseButton(){
   btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
 }
 
-// --- CONTROLS ---
+/* --- CONTROLS --- */
 document.getElementById("playPause").onclick = togglePlayPause;
 document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
-// --- REPEAT ---
+/* --- REPEAT --- */
 document.getElementById("repeat").onclick = function(){
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-// --- LIGHT/DARK MODE ---
+/* --- THEME --- */
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
   this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-// --- SEEK & PROGRESS ---
+/* --- SEEK & TIME --- */
 function updateTime(){
   const audio = tracks[currentTrack];
   seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
@@ -178,7 +219,7 @@ function updateTime(){
 setInterval(updateTime,200);
 seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
 
-// --- VOLUME + MUTE ---
+/* --- VOLUME & MUTE --- */
 const volumeEl = document.getElementById("volume");
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
@@ -188,9 +229,9 @@ function toggleMute(){
 }
 document.getElementById("muteUnmute").onclick = toggleMute;
 
-// --- AUTO NEXT ---
-tracks.forEach(track => {
-  track.addEventListener("ended", () => {
+/* --- AUTO NEXT --- */
+tracks.forEach(track=>{
+  track.addEventListener("ended",()=>{
     if(repeatMode==="single"){ playTrack(currentTrack); }
     else if(currentTrack<tracks.length-1){ playTrack(currentTrack+1); }
     else if(repeatMode==="all"){ playTrack(0); }
@@ -198,13 +239,13 @@ tracks.forEach(track => {
   });
 });
 
-// --- START FIRST TRACK ---
+/* --- START FIRST TRACK --- */
 playTrack(0);
 
-// --- KEYBOARD SHORTCUTS ---
-document.addEventListener("keydown", (e) => {
+/* --- KEYBOARD SHORTCUTS --- */
+document.addEventListener("keydown",(e)=>{
   switch(e.key){
-    case " ": togglePlayPause(); e.preventDefault(); break; // Space
+    case " ": togglePlayPause(); e.preventDefault(); break;
     case "ArrowLeft": document.getElementById("prev").click(); break;
     case "ArrowRight": document.getElementById("next").click(); break;
     case "s": case "S": document.getElementById("stop").click(); break;
