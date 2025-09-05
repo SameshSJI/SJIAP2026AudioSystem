@@ -5,86 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Audio Playlist</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #fefefe;
-    color: #333;
-    margin: 0;
-    padding: 0;
-  }
+  body { font-family: Arial, sans-serif; background: #fefefe; color: #333; margin: 20px; }
   .dark { background: #222; color: #eee; }
-  header {
-    text-align: center;
-    padding: 15px;
-    background: #4CAF50;
-    color: white;
-    font-size: 1.4em;
+  button { margin: 5px; }
+  #controls { margin-bottom: 10px; }
+  
+  /* Scrollable playlist section */
+  #playlist-container {
+    max-height: 300px;        /* Adjust height as needed */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background: #f9f9f9;
+    scroll-behavior: smooth;
   }
-  #controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-  }
-  button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #eee;
-  }
-  button:hover { background: #ddd; }
-  #seek, #volume {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-  }
-  #time, #volumeLabel {
-    text-align: center;
-    display: block;
-    margin-bottom: 10px;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .track {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-    cursor: pointer;
-  }
-  .track:hover { background: #f0f0f0; }
-  .current { font-weight: bold; background: #d1f5d3; }
+  .track { padding: 5px; cursor: pointer; }
+  .track.current { font-weight: bold; }
+  
+  /* Mobile adjustments */
   @media (max-width: 600px) {
-    header { font-size: 1.1em; }
-    button { flex: 1 1 45%; font-size: 13px; }
-    #controls { gap: 5px; }
+    button { font-size: 14px; padding: 8px; }
+    #seek { width: 100%; }
   }
 </style>
 </head>
 <body>
-<header>🎵 Audio Playlist 🎵</header>
+<h1>Audio Playlist</h1>
 
 <div id="controls">
   <button id="prev">⏮️ Prev (←)</button>
   <button id="playPause">▶️ Play (Space)</button>
   <button id="stop">⏹️ Stop (S)</button>
   <button id="next">⏭️ Next (→)</button>
-  <button id="repeat">Repeat: Off (R)</button>
+  Repeat: <button id="repeat">Off (R)</button>
   <button id="theme">☀️ Light Mode (T)</button>
+  <br>
+  Seek: <input type="range" id="seek" value="0" min="0" max="100" style="width: 300px;">
+  <span id="time">0:00 / 0:00</span>
+  <br>
+  Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
 
-<input type="range" id="seek" value="0" min="0" max="100">
-<span id="time">0:00 / 0:00</span>
-
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-<span id="volumeLabel">Volume</span>
-
-<ul id="playlist"></ul>
+<div id="playlist-container">
+  <ul id="playlist"></ul>
+</div>
 
 <script>
 // --- TRACKS SETUP ---
@@ -133,7 +98,7 @@ const trackTitles = [
 // --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "auto"; // full preload to reduce lag
+  audio.preload = "metadata";
   return audio;
 });
 
@@ -143,7 +108,6 @@ let repeatMode = "off";
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
-const volumeEl = document.getElementById("volume");
 
 // --- CREATE PLAYLIST UI ---
 tracks.forEach((track, i) => {
@@ -154,14 +118,13 @@ tracks.forEach((track, i) => {
   playlistEl.appendChild(li);
 });
 
-// --- HIGHLIGHT FUNCTION ---
+// --- PLAY/PAUSE & HIGHLIGHT ---
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
-// --- PLAY/PAUSE ---
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -185,11 +148,7 @@ function updatePlayPauseButton(){
 
 // --- CONTROLS ---
 document.getElementById("playPause").onclick = togglePlayPause;
-document.getElementById("stop").onclick = () => { 
-  tracks[currentTrack].pause(); 
-  tracks[currentTrack].currentTime=0; 
-  updatePlayPauseButton(); 
-};
+document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
@@ -200,31 +159,27 @@ document.getElementById("repeat").onclick = function(){
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-// --- THEME SWITCH ---
+// --- LIGHT/DARK MODE ---
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
   this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-// --- SEEK BAR ---
+// --- SEEK & PROGRESS ---
 function updateTime(){
   const audio = tracks[currentTrack];
-  if(audio.duration > 0){
-    seekEl.value = (audio.currentTime/audio.duration)*100;
-  }
+  seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
   const minCur = Math.floor(audio.currentTime/60);
   const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
   const minDur = Math.floor(audio.duration/60)||0;
   const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
   timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
 }
-setInterval(updateTime,500);
+setInterval(updateTime,200);
+seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
 
-seekEl.oninput = () => { 
-  tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; 
-};
-
-// --- VOLUME ---
+// --- VOLUME + MUTE ---
+const volumeEl = document.getElementById("volume");
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
 function toggleMute(){
@@ -244,7 +199,7 @@ tracks.forEach(track => {
 });
 
 // --- START FIRST TRACK ---
-highlight();
+playTrack(0);
 
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
