@@ -5,98 +5,117 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Audio Playlist</title>
 <style>
-  /* --- BODY & THEME --- */
   body {
     font-family: Arial, sans-serif;
-    background: #e8f5e9; /* light green */
+    background: #e8f5e9; /* light green background */
     color: #1b5e20; /* dark green text */
-    margin: 20px;
+    margin: 0;
+    padding: 0;
   }
-  .dark {
-    background: #1b5e20;
-    color: #e8f5e9;
+  .dark { 
+    background: #1b5e20; 
+    color: #e8f5e9; 
   }
-
-  /* --- BUTTONS --- */
+  header {
+    text-align: center;
+    padding: 15px;
+    background: #43a047; /* green header */
+    color: white;
+    font-size: 1.4em;
+  }
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    position: sticky; /* keeps controls visible while scrolling */
+    top: 0;
+    background: #a5d6a7; /* light green background for controls */
+    z-index: 10;
+    border-bottom: 2px solid #388e3c;
+  }
   button {
-    margin: 5px;
-    padding: 6px 10px;
+    padding: 8px 12px;
+    font-size: 14px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    background-color: #43a047; /* green */
+    background: #66bb6a; /* green buttons */
     color: white;
     font-weight: bold;
     transition: background 0.2s;
   }
-  button:hover {
-    background-color: #2e7d32; /* darker green */
+  button:hover { 
+    background: #388e3c; /* darker green on hover */
   }
-
-  /* --- TRACKLIST --- */
-  #playlist {
-    max-height: 250px;
+  #seek, #volume {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+  }
+  #time, #volumeLabel {
+    text-align: center;
+    display: block;
+    margin-bottom: 10px;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px;
+    max-height: 300px; /* mini-scrollable playlist section */
     overflow-y: auto;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
     background: #a5d6a7; /* light green playlist */
     border: 1px solid #388e3c;
+    border-radius: 8px;
   }
   .track {
+    padding: 10px;
+    border-bottom: 1px solid #c8e6c9;
     cursor: pointer;
-    margin: 4px 0;
-    padding: 4px 6px;
-    border-radius: 4px;
+    transition: background 0.2s;
   }
-  .track:hover {
-    background-color: #66bb6a;
+  .track:hover { 
+    background: #66bb6a; 
+    color: white;
   }
-  .current {
-    font-weight: bold;
-    background-color: #388e3c;
-    color: #e8f5e9;
-    padding: 4px 6px;
-    border-radius: 4px;
+  .current { 
+    font-weight: bold; 
+    background: #388e3c; 
+    color: #e8f5e9; 
+    padding: 4px 6px; 
+    border-radius: 4px; 
   }
-
-  /* --- RANGE SLIDERS --- */
-  input[type="range"] {
-    vertical-align: middle;
-    margin: 0 5px;
-  }
-
-  /* --- MOBILE RESPONSIVE --- */
-  @media(max-width: 600px){
-    #controls { font-size: 14px; }
-    button { padding: 4px 8px; font-size: 14px; }
-    #seek { width: 200px; }
-    #playlist { max-height: 180px; }
+  @media (max-width: 600px) {
+    header { font-size: 1.1em; }
+    button { flex: 1 1 45%; font-size: 13px; }
+    #controls { gap: 5px; }
   }
 </style>
 </head>
 <body>
-<h1>Audio Playlist</h1>
+<header>🎵 Audio Playlist 🎵</header>
 
 <div id="controls">
   <button id="prev">⏮️ Prev (←)</button>
   <button id="playPause">▶️ Play (Space)</button>
   <button id="stop">⏹️ Stop (S)</button>
   <button id="next">⏭️ Next (→)</button>
-  Repeat: <button id="repeat">Off (R)</button>
+  <button id="repeat">Repeat: Off (R)</button>
   <button id="theme">☀️ Light Mode (T)</button>
-  <br><br>
-  Seek: <input type="range" id="seek" value="0" min="0" max="100">
-  <span id="time">0:00 / 0:00</span>
-  <br><br>
-  Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
+
+<input type="range" id="seek" value="0" min="0" max="100">
+<span id="time">0:00 / 0:00</span>
+
+<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+<span id="volumeLabel">Volume</span>
 
 <ul id="playlist"></ul>
 
 <script>
-// --- TRACK SETUP ---
+// --- TRACKS SETUP ---
 const baseURL = "./Audio/";
 const trackFiles = [
   "0_Right_Marker_March_in.mp3",
@@ -142,7 +161,7 @@ const trackTitles = [
 // --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "auto"; // preload full audio for faster playback
+  audio.preload = "auto"; // preload all for smoother playback
   return audio;
 });
 
@@ -152,6 +171,7 @@ let repeatMode = "off";
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
+const volumeEl = document.getElementById("volume");
 
 // --- CREATE PLAYLIST UI ---
 tracks.forEach((track, i) => {
@@ -162,13 +182,14 @@ tracks.forEach((track, i) => {
   playlistEl.appendChild(li);
 });
 
-// --- PLAY/PAUSE & HIGHLIGHT ---
+// --- HIGHLIGHT FUNCTION ---
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
+// --- PLAY/PAUSE ---
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -192,7 +213,11 @@ function updatePlayPauseButton(){
 
 // --- CONTROLS ---
 document.getElementById("playPause").onclick = togglePlayPause;
-document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
+document.getElementById("stop").onclick = () => { 
+  tracks[currentTrack].pause(); 
+  tracks[currentTrack].currentTime=0; 
+  updatePlayPauseButton(); 
+};
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
@@ -203,27 +228,31 @@ document.getElementById("repeat").onclick = function(){
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-// --- LIGHT/DARK MODE ---
+// --- THEME SWITCH ---
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
   this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-// --- SEEK & PROGRESS ---
+// --- SEEK BAR ---
 function updateTime(){
   const audio = tracks[currentTrack];
-  seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
+  if(audio.duration > 0){
+    seekEl.value = (audio.currentTime/audio.duration)*100;
+  }
   const minCur = Math.floor(audio.currentTime/60);
   const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
   const minDur = Math.floor(audio.duration/60)||0;
   const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
   timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
 }
-setInterval(updateTime,200);
-seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
+setInterval(updateTime,500);
 
-// --- VOLUME + MUTE ---
-const volumeEl = document.getElementById("volume");
+seekEl.oninput = () => { 
+  tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; 
+};
+
+// --- VOLUME ---
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
 function toggleMute(){
@@ -243,12 +272,12 @@ tracks.forEach(track => {
 });
 
 // --- START FIRST TRACK ---
-playTrack(0);
+highlight();
 
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
   switch(e.key){
-    case " ": togglePlayPause(); e.preventDefault(); break;
+    case " ": togglePlayPause(); e.preventDefault(); break; // Space
     case "ArrowLeft": document.getElementById("prev").click(); break;
     case "ArrowRight": document.getElementById("next").click(); break;
     case "s": case "S": document.getElementById("stop").click(); break;
