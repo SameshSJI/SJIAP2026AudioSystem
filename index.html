@@ -10,15 +10,21 @@
   button { margin: 5px; }
   .track { cursor: pointer; margin: 2px 0; }
   .current { font-weight: bold; }
+  #loadingBarContainer { width: 100%; background: #ddd; margin: 10px 0; height: 20px; border-radius: 10px; }
+  #loadingBar { height: 100%; width: 0%; background: #4caf50; border-radius: 10px; }
 </style>
 </head>
 <body>
 <h1>Audio Playlist</h1>
 
+<div id="loadingBarContainer">
+  <div id="loadingBar"></div>
+</div>
+<span id="loadingText">Loading 0%</span>
+
 <div id="controls">
   <button id="prev">⏮️ Prev</button>
-  <button id="play">▶️ Play</button>
-  <button id="pause">⏸️ Pause</button>
+  <button id="playPause">▶️ Play</button>
   <button id="stop">⏹️ Stop</button>
   <button id="next">⏭️ Next</button>
   Repeat: <button id="repeat">Off</button>
@@ -28,81 +34,128 @@
   <span id="time">0:00 / 0:00</span>
   <br>
   Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-  <button id="mute">Mute</button>
+  <button id="muteUnmute">🔊 Volume</button>
 </div>
 
 <ul id="playlist"></ul>
 
 <script>
-// Password protection
-const password = "SJIUG2026!";
-let entered = prompt("Enter password:");
-if(entered !== password) { alert("Incorrect password!"); document.body.innerHTML="Access denied"; throw "Access denied"; }
-
-// Track data using raw GitHub URLs
 const baseURL = "https://raw.githubusercontent.com/SameshSJI/SJIAP2026AudioSystem/main/Audio/";
-const tracksData = [
-  {src: baseURL + "0_Right_Marker_March_in.mp3", title:"(0) Right Marker March in"},
-  {src: baseURL + "1_Supporting_Contingent_March_in.mp3", title:"(1) Supporting Contingent March in"},
-  {src: baseURL + "2_Commander_march_in_front.mp3", title:"(2) Commander march in front"},
-  {src: baseURL + "3_Right_dressing.mp3", title:"(3) Right dressing"},
-  {src: baseURL + "4_School_Rally_GOH_march_in.mp3", title:"(4) School Rally (GOH march in)"},
-  {src: baseURL + "5_16_beat_drum_roll_GOH_Fan_out.mp3", title:"(5) 16 beat drum roll (GOH Fan out)"},
-  {src: baseURL + "6_Right_dressing.mp3", title:"(6) Right dressing"},
-  {src: baseURL + "7_Fanfare_Arrival_of_Reviewing_Officer.mp3", title:"(7) Fanfare (Arrival of Reviewing Officer)"},
-  {src: baseURL + "8_Salute_No7_Hormat_Reviewing_Officer.mp3", title:"(8) Salute No.7 (Hormat Reviewing Officer)"},
-  {src: baseURL + "9_Inspection_of_GOH.mp3", title:"(9) Inspection of GOH"},
-  {src: baseURL + "10_Commander_march_in_front.mp3", title:"(10) Commander march in front"},
-  {src: baseURL + "11_48_rolls.mp3", title:"(11) 48 rolls"},
-  {src: baseURL + "12_TENTERA_SINGAPURA_March_Past.mp3", title:"(12) TENTERA SINGAPURA (March Past)"},
-  {src: baseURL + "12A_March_Past_2_Rally.mp3", title:"(12A) March Past 2 (Rally)"},
-  {src: baseURL + "13_Commander_march_in_front.mp3", title:"(13) Commander march in front"},
-  {src: baseURL + "14_Right_dressing.mp3", title:"(14) Right dressing"},
-  {src: baseURL + "15_Sunset_Flag_Lowering.mp3", title:"(15) Sunset (Flag Lowering)"},
-  {src: baseURL + "16_Auld_Lang_Syne.mp3", title:"(16) Auld Lang Syne"}
+const trackFiles = [
+  "0_Right_Marker_March_in.mp3",
+  "1_Supporting_Contingent_March_in.mp3",
+  "2_Commander_march_in_front.mp3",
+  "3_Right_dressing.mp3",
+  "4_School_Rally_GOH_march_in.mp3",
+  "5_16_beat_drum_roll_GOH_Fan_out.mp3",
+  "6_Right_dressing.mp3",
+  "7_Fanfare_Arrival_of_Reviewing_Officer.mp3",
+  "8_Salute_No7_Hormat_Reviewing_Officer.mp3",
+  "9_Inspection_of_GOH.mp3",
+  "10_Commander_march_in_front.mp3",
+  "11_48_rolls.mp3",
+  "12_TENTERA_SINGAPURA_March_Past.mp3",
+  "12A_March_Past_2_Rally.mp3",
+  "13_Commander_march_in_front.mp3",
+  "14_Right_dressing.mp3",
+  "15_Sunset_Flag_Lowering.mp3",
+  "16_Auld_Lang_Syne.mp3"
 ];
+
+const trackTitles = [
+  "(0) Right Marker March in",
+  "(1) Supporting Contingent March in",
+  "(2) Commander march in front",
+  "(3) Right dressing",
+  "(4) School Rally (GOH march in)",
+  "(5) 16 beat drum roll (GOH Fan out)",
+  "(6) Right dressing",
+  "(7) Fanfare (Arrival of Reviewing Officer)",
+  "(8) Salute No.7 (Hormat Reviewing Officer)",
+  "(9) Inspection of GOH",
+  "(10) Commander march in front",
+  "(11) 48 rolls",
+  "(12) TENTERA SINGAPURA (March Past)",
+  "(12A) March Past 2 (Rally)",
+  "(13) Commander march in front",
+  "(14) Right dressing",
+  "(15) Sunset (Flag Lowering)",
+  "(16) Auld Lang Syne"
+];
+
+// Preload all tracks
+const tracks = trackFiles.map(file => {
+  const audio = new Audio(baseURL + file);
+  audio.preload = "auto";
+  return audio;
+});
+
+let loadedCount = 0;
+tracks.forEach(track => {
+  track.addEventListener("canplaythrough", () => {
+    loadedCount++;
+    const percent = Math.floor((loadedCount / tracks.length) * 100);
+    document.getElementById("loadingBar").style.width = percent + "%";
+    document.getElementById("loadingText").textContent = "Loading " + percent + "%";
+    if(percent===100) document.getElementById("loadingText").textContent="All tracks loaded!";
+  });
+});
 
 let currentTrack = 0;
 let repeatMode = "off";
-const audio = new Audio();
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 
-// Build playlist UI
-tracksData.forEach((track, i) => {
+// Playlist UI
+tracks.forEach((track, i) => {
   const li = document.createElement("li");
-  li.textContent = track.title;
+  li.textContent = trackTitles[i];
   li.classList.add("track");
   li.addEventListener("click", () => { playTrack(i); });
   playlistEl.appendChild(li);
 });
 
-// Highlight current track
+// Highlight current
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
-// Play specific track
-function playTrack(i) {
+// Play/Pause logic
+function playTrack(i){
+  tracks[currentTrack].pause();
+  tracks[currentTrack].currentTime = 0;
   currentTrack = i;
-  audio.src = tracksData[currentTrack].src;
-  audio.play();
+  tracks[currentTrack].play();
   highlight();
+  updatePlayPauseButton();
 }
+
+function togglePlayPause(){
+  const audio = tracks[currentTrack];
+  if(audio.paused) audio.play();
+  else audio.pause();
+  updatePlayPauseButton();
+}
+
+function updatePlayPauseButton(){
+  const btn = document.getElementById("playPause");
+  btn.textContent = tracks[currentTrack].paused ? "▶️ Play" : "⏸️ Pause";
+}
+
+// Start with track 0
 playTrack(0);
 
 // Controls
-document.getElementById("play").onclick = () => audio.play();
-document.getElementById("pause").onclick = () => audio.pause();
-document.getElementById("stop").onclick = () => { audio.pause(); audio.currentTime=0; };
-document.getElementById("prev").onclick = () => { currentTrack = (currentTrack-1+tracksData.length)%tracksData.length; playTrack(currentTrack); };
-document.getElementById("next").onclick = () => { currentTrack = (currentTrack+1)%tracksData.length; playTrack(currentTrack); };
+document.getElementById("playPause").onclick = togglePlayPause;
+document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
+document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
+document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
-// Repeat toggle
-document.getElementById("repeat").onclick = function() {
+// Repeat
+document.getElementById("repeat").onclick = function(){
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off"; }
@@ -115,26 +168,36 @@ document.getElementById("theme").onclick = function() {
 };
 
 // Seek / progress
-audio.addEventListener("timeupdate", () => {
+function updateTime(){
+  const audio = tracks[currentTrack];
   seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
   const minCur = Math.floor(audio.currentTime/60);
   const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
   const minDur = Math.floor(audio.duration/60)||0;
   const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
   timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
-});
-seekEl.oninput = () => { audio.currentTime = (seekEl.value/100)*audio.duration; };
+}
+setInterval(updateTime,200);
+seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
 
-// Volume
+// Volume + Mute toggle
 const volumeEl = document.getElementById("volume");
-volumeEl.oninput = () => audio.volume = volumeEl.value;
-document.getElementById("mute").onclick = () => { audio.muted = !audio.muted; };
+volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
+
+function toggleMute(){
+  tracks[currentTrack].muted = !tracks[currentTrack].muted;
+  document.getElementById("muteUnmute").textContent = tracks[currentTrack].muted ? "🔇 Muted" : "🔊 Volume";
+}
+document.getElementById("muteUnmute").onclick = toggleMute;
 
 // Auto next
-audio.addEventListener("ended", () => {
-  if(repeatMode==="single"){ playTrack(currentTrack); }
-  else if(currentTrack<tracksData.length-1){ playTrack(currentTrack+1); }
-  else if(repeatMode==="all"){ playTrack(0); }
+tracks.forEach(track => {
+  track.addEventListener("ended", () => {
+    if(repeatMode==="single"){ playTrack(currentTrack); }
+    else if(currentTrack<tracks.length-1){ playTrack(currentTrack+1); }
+    else if(repeatMode==="all"){ playTrack(0); }
+    updatePlayPauseButton();
+  });
 });
 </script>
 </body>
