@@ -10,37 +10,31 @@
   button { margin: 5px; }
   .track { cursor: pointer; margin: 2px 0; }
   .current { font-weight: bold; }
-  #loadingBarContainer { width: 100%; background: #ddd; margin: 10px 0; height: 20px; border-radius: 10px; }
-  #loadingBar { height: 100%; width: 0%; background: #4caf50; border-radius: 10px; }
 </style>
 </head>
 <body>
 <h1>Audio Playlist</h1>
 
-<div id="loadingBarContainer">
-  <div id="loadingBar"></div>
-</div>
-<span id="loadingText">Loading 0%</span>
-
 <div id="controls">
-  <button id="prev">⏮️ Prev</button>
-  <button id="playPause">▶️ Play</button>
-  <button id="stop">⏹️ Stop</button>
-  <button id="next">⏭️ Next</button>
-  Repeat: <button id="repeat">Off</button>
-  <button id="theme">☀️ Light Mode</button>
+  <button id="prev">⏮️ Prev (←)</button>
+  <button id="playPause">▶️ Play (Space)</button>
+  <button id="stop">⏹️ Stop (S)</button>
+  <button id="next">⏭️ Next (→)</button>
+  Repeat: <button id="repeat">Off (R)</button>
+  <button id="theme">☀️ Light Mode (T)</button>
   <br>
   Seek: <input type="range" id="seek" value="0" min="0" max="100" style="width: 300px;">
   <span id="time">0:00 / 0:00</span>
   <br>
   Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-  <button id="muteUnmute">🔊 Volume</button>
+  <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
 
 <ul id="playlist"></ul>
 
 <script>
-const baseURL = "https://raw.githubusercontent.com/SameshSJI/SJIAP2026AudioSystem/main/Audio/";
+// --- TRACKS SETUP ---
+const baseURL = "./Audio/";
 const trackFiles = [
   "0_Right_Marker_March_in.mp3",
   "1_Supporting_Contingent_March_in.mp3",
@@ -61,7 +55,6 @@ const trackFiles = [
   "15_Sunset_Flag_Lowering.mp3",
   "16_Auld_Lang_Syne.mp3"
 ];
-
 const trackTitles = [
   "(0) Right Marker March in",
   "(1) Supporting Contingent March in",
@@ -83,31 +76,21 @@ const trackTitles = [
   "(16) Auld Lang Syne"
 ];
 
-// Preload all tracks
+// --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "auto";
+  audio.preload = "metadata"; // only metadata, not full load
   return audio;
-});
-
-let loadedCount = 0;
-tracks.forEach(track => {
-  track.addEventListener("canplaythrough", () => {
-    loadedCount++;
-    const percent = Math.floor((loadedCount / tracks.length) * 100);
-    document.getElementById("loadingBar").style.width = percent + "%";
-    document.getElementById("loadingText").textContent = "Loading " + percent + "%";
-    if(percent===100) document.getElementById("loadingText").textContent="All tracks loaded!";
-  });
 });
 
 let currentTrack = 0;
 let repeatMode = "off";
+
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 
-// Playlist UI
+// --- CREATE PLAYLIST UI ---
 tracks.forEach((track, i) => {
   const li = document.createElement("li");
   li.textContent = trackTitles[i];
@@ -116,14 +99,13 @@ tracks.forEach((track, i) => {
   playlistEl.appendChild(li);
 });
 
-// Highlight current
+// --- PLAY/PAUSE & HIGHLIGHT ---
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
-// Play/Pause logic
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -142,32 +124,29 @@ function togglePlayPause(){
 
 function updatePlayPauseButton(){
   const btn = document.getElementById("playPause");
-  btn.textContent = tracks[currentTrack].paused ? "▶️ Play" : "⏸️ Pause";
+  btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
 }
 
-// Start with track 0
-playTrack(0);
-
-// Controls
+// --- CONTROLS ---
 document.getElementById("playPause").onclick = togglePlayPause;
 document.getElementById("stop").onclick = () => { tracks[currentTrack].pause(); tracks[currentTrack].currentTime=0; updatePlayPauseButton(); };
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
-// Repeat
+// --- REPEAT ---
 document.getElementById("repeat").onclick = function(){
-  if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single"; } 
-  else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All"; } 
-  else { repeatMode="off"; this.textContent="Repeat: Off"; }
+  if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
+  else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
+  else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-// Light/Dark mode
+// --- LIGHT/DARK MODE ---
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
-  this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode" : "☀️ Light Mode";
+  this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-// Seek / progress
+// --- SEEK & PROGRESS ---
 function updateTime(){
   const audio = tracks[currentTrack];
   seekEl.value = (audio.currentTime/audio.duration)*100 || 0;
@@ -180,17 +159,17 @@ function updateTime(){
 setInterval(updateTime,200);
 seekEl.oninput = () => { tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; };
 
-// Volume + Mute toggle
+// --- VOLUME + MUTE ---
 const volumeEl = document.getElementById("volume");
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
 function toggleMute(){
   tracks[currentTrack].muted = !tracks[currentTrack].muted;
-  document.getElementById("muteUnmute").textContent = tracks[currentTrack].muted ? "🔇 Muted" : "🔊 Volume";
+  document.getElementById("muteUnmute").textContent = tracks[currentTrack].muted ? "🔇 Muted (M)" : "🔊 Volume (M)";
 }
 document.getElementById("muteUnmute").onclick = toggleMute;
 
-// Auto next
+// --- AUTO NEXT ---
 tracks.forEach(track => {
   track.addEventListener("ended", () => {
     if(repeatMode==="single"){ playTrack(currentTrack); }
@@ -198,6 +177,22 @@ tracks.forEach(track => {
     else if(repeatMode==="all"){ playTrack(0); }
     updatePlayPauseButton();
   });
+});
+
+// --- START FIRST TRACK ---
+playTrack(0);
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener("keydown", (e) => {
+  switch(e.key){
+    case " ": togglePlayPause(); e.preventDefault(); break; // Space
+    case "ArrowLeft": document.getElementById("prev").click(); break;
+    case "ArrowRight": document.getElementById("next").click(); break;
+    case "s": case "S": document.getElementById("stop").click(); break;
+    case "r": case "R": document.getElementById("repeat").click(); break;
+    case "t": case "T": document.getElementById("theme").click(); break;
+    case "m": case "M": document.getElementById("muteUnmute").click(); break;
+  }
 });
 </script>
 </body>
