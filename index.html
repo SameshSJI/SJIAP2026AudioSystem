@@ -1,298 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio Playlist</title>
-<style>
-  body {
-    font-family: "Times New Roman", Times, serif;
-    background: #e8f5e9; /* light green background */
-    color: #1b5e20; /* dark green text */
-    margin: 0;
-    padding: 0;
-  }
-  .dark { 
-    background: #1b5e20; 
-    color: #e8f5e9; 
-  }
-  header {
-    text-align: center;
-    padding: 15px;
-    background: #43a047; /* green header */
-    color: white;
-    font-size: 1.4em;
-  }
-  #controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    position: sticky; /* keeps controls visible while scrolling */
-    top: 0;
-    background: #a5d6a7; /* light green background for controls */
-    z-index: 10;
-    border-bottom: 2px solid #388e3c;
-  }
-  button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #66bb6a; /* green buttons */
-    color: white;
-    font-weight: bold;
-    transition: background 0.2s;
-    font-family: "Times New Roman", Times, serif;
-  }
-  button:hover { 
-    background: #388e3c; /* darker green on hover */
-  }
-  #seek, #volume {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-  }
-  #time, #volumeLabel {
-    text-align: center;
-    display: block;
-    margin-bottom: 10px;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 10px;
-    max-height: 300px; /* mini-scrollable playlist section */
-    overflow-y: auto;
-    background: #a5d6a7; /* light green playlist */
-    border: 1px solid #388e3c;
-    border-radius: 8px;
-  }
-  .track {
-    padding: 10px;
-    border-bottom: 1px solid #c8e6c9;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .track:hover { 
-    background: #66bb6a; 
-    color: white;
-  }
-  .current { 
-    font-weight: bold; 
-    background: #388e3c; 
-    color: #e8f5e9; 
-    padding: 4px 6px; 
-    border-radius: 4px; 
-  }
-  @media (max-width: 600px) {
-    header { font-size: 1.1em; }
-    button { flex: 1 1 45%; font-size: 13px; }
-    #controls { gap: 5px; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SJIAP 2026 Audio System</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Times New Roman", serif;
+      background-color: #0b3d0b;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #145214;
+      width: 100%;
+      padding: 15px 0;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 20px;
+      gap: 20px;
+    }
+
+    .playlist {
+      flex: 1;
+      max-width: 300px;
+      background-color: #1a4f1a;
+      border-radius: 10px;
+      padding: 15px;
+      overflow-y: auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .playlist h2 {
+      text-align: center;
+      font-size: 1.3em;
+      margin-bottom: 10px;
+    }
+
+    .track {
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 5px;
+      background-color: #226622;
+      transition: background 0.3s;
+    }
+
+    .track:hover {
+      background-color: #2b7a2b;
+    }
+
+    .track.active {
+      background-color: #34a834;
+      color: #000;
+    }
+
+    .player {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #1a4f1a;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    }
+
+    audio {
+      width: 100%;
+      outline: none;
+      margin-top: 20px;
+    }
+
+    footer {
+      width: 100%;
+      text-align: center;
+      padding: 10px 0;
+      background-color: #145214;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 700px) {
+      main {
+        flex-direction: column;
+        align-items: center;
+      }
+      .playlist {
+        max-width: 90%;
+      }
+      .player {
+        width: 90%;
+      }
+    }
+  </style>
 </head>
 <body>
-<header>🎵 Audio Playlist 🎵</header>
+  <header>SJIAP 2026 Audio System</header>
 
-<div id="controls">
-  <button id="prev">⏮️ Prev (←)</button>
-  <button id="playPause">▶️ Play (Space)</button>
-  <button id="stop">⏹️ Stop (S)</button>
-  <button id="next">⏭️ Next (→)</button>
-  <button id="repeat">Repeat: Off (R)</button>
-  <button id="theme">☀️ Light Mode (T)</button>
-  <button id="muteUnmute">🔊 Volume (M)</button>
-</div>
+  <main>
+    <div class="playlist" id="playlist">
+      <h2>Track List</h2>
+      <div class="track" data-src="audio1.mp3">Track 1 - Opening</div>
+      <div class="track" data-src="audio2.mp3">Track 2 - Parade Segment</div>
+      <div class="track" data-src="audio3.mp3">Track 3 - Ceremony</div>
+      <div class="track" data-src="audio4.mp3">Track 4 - Closing</div>
+    </div>
 
-<input type="range" id="seek" value="0" min="0" max="100">
-<span id="time">0:00 / 0:00</span>
+    <div class="player">
+      <h2 id="currentTrack">Select a track...</h2>
+      <audio id="audioPlayer" controls autoplay></audio>
+    </div>
+  </main>
 
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-<span id="volumeLabel">Volume</span>
+  <footer>Press “A” to toggle autoplay ON/OFF</footer>
 
-<ul id="playlist"></ul>
+  <script>
+    const playlist = document.querySelectorAll(".track");
+    const player = document.getElementById("audioPlayer");
+    const currentTrack = document.getElementById("currentTrack");
 
-<script>
-// --- TRACKS SETUP ---
-const baseURL = "./Audio/";
-const trackFiles = [
-  "0_Right_Marker_March_in.mp3",
-  "1_Supporting_Contingent_March_in.mp3",
-  "2_Commander_march_in_front.mp3",
-  "3_Right_dressing.mp3",
-  "4_School_Rally_GOH_march_in.mp3",
-  "5_16_beat_drum_roll_GOH_Fan_out.mp3",
-  "6_Right_dressing.mp3",
-  "7_Fanfare_Arrival_of_Reviewing_Officer.mp3",
-  "8_Salute_No7_Hormat_Reviewing_Officer.mp3",
-  "9_Inspection_of_GOH.mp3",
-  "10_Commander_march_in_front.mp3",
-  "11_48_rolls.mp3",
-  "12_TENTERA_SINGAPURA_March_Past.mp3",
-  "12A_March_Past_2_Rally.mp3",
-  "13_Commander_march_in_front.mp3",
-  "14_Right_dressing.mp3",
-  "15_Sunset_Flag_Lowering.mp3",
-  "16_Auld_Lang_Syne.mp3"
-];
-const trackTitles = [
-  "(0) Right Marker March in",
-  "(1) Supporting Contingent March in",
-  "(2) Commander march in front",
-  "(3) Right dressing",
-  "(4) School Rally (GOH march in)",
-  "(5) 16 beat drum roll (GOH Fan out)",
-  "(6) Right dressing",
-  "(7) Fanfare (Arrival of Reviewing Officer)",
-  "(8) Salute No.7 (Hormat Reviewing Officer)",
-  "(9) Inspection of GOH",
-  "(10) Commander march in front",
-  "(11) 48 rolls",
-  "(12) TENTERA SINGAPURA (March Past)",
-  "(12A) March Past 2 (Rally)",
-  "(13) Commander march in front",
-  "(14) Right dressing",
-  "(15) Sunset (Flag Lowering)",
-  "(16) Auld Lang Syne"
-];
+    let autoplayEnabled = true; // default ON
+    let currentIndex = 0;
 
-// --- AUDIO OBJECTS ---
-const tracks = trackFiles.map(file => {
-  const audio = new Audio(baseURL + file);
-  audio.preload = "auto"; 
-  return audio;
-});
-
-let currentTrack = 0;
-let repeatMode = "off";
-let autoplay = true; // ✅ autoplay enabled by default
-
-const playlistEl = document.getElementById("playlist");
-const seekEl = document.getElementById("seek");
-const timeEl = document.getElementById("time");
-const volumeEl = document.getElementById("volume");
-
-// --- CREATE PLAYLIST UI ---
-tracks.forEach((track, i) => {
-  const li = document.createElement("li");
-  li.textContent = trackTitles[i];
-  li.classList.add("track");
-  li.addEventListener("click", () => { playTrack(i); });
-  playlistEl.appendChild(li);
-});
-
-// --- HIGHLIGHT FUNCTION ---
-function highlight() {
-  document.querySelectorAll(".track").forEach((el, i) => {
-    el.classList.toggle("current", i === currentTrack);
-  });
-}
-
-// --- PLAY/PAUSE ---
-function playTrack(i) {
-  tracks[currentTrack].pause();
-  tracks[currentTrack].currentTime = 0;
-  currentTrack = i;
-  tracks[currentTrack].play();
-  highlight();
-  updatePlayPauseButton();
-}
-
-function togglePlayPause() {
-  const audio = tracks[currentTrack];
-  if (audio.paused) audio.play();
-  else audio.pause();
-  updatePlayPauseButton();
-}
-
-function updatePlayPauseButton() {
-  const btn = document.getElementById("playPause");
-  btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
-}
-
-// --- CONTROLS ---
-document.getElementById("playPause").onclick = togglePlayPause;
-document.getElementById("stop").onclick = () => { 
-  tracks[currentTrack].pause(); 
-  tracks[currentTrack].currentTime = 0; 
-  updatePlayPauseButton(); 
-};
-document.getElementById("prev").onclick = () => { playTrack((currentTrack - 1 + tracks.length) % tracks.length); };
-document.getElementById("next").onclick = () => { playTrack((currentTrack + 1) % tracks.length); };
-
-// --- REPEAT ---
-document.getElementById("repeat").onclick = function() {
-  if (repeatMode === "off") { repeatMode = "single"; this.textContent = "Repeat: Single (R)"; } 
-  else if (repeatMode === "single") { repeatMode = "all"; this.textContent = "Repeat: All (R)"; } 
-  else { repeatMode = "off"; this.textContent = "Repeat: Off (R)"; }
-};
-
-// --- THEME SWITCH ---
-document.getElementById("theme").onclick = function() {
-  document.body.classList.toggle("dark");
-  this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
-};
-
-// --- SEEK BAR ---
-function updateTime() {
-  const audio = tracks[currentTrack];
-  if (audio.duration > 0) {
-    seekEl.value = (audio.currentTime / audio.duration) * 100;
-  }
-  const minCur = Math.floor(audio.currentTime / 60);
-  const secCur = Math.floor(audio.currentTime % 60).toString().padStart(2, "0");
-  const minDur = Math.floor(audio.duration / 60) || 0;
-  const secDur = Math.floor(audio.duration % 60).toString().padStart(2, "0");
-  timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
-}
-setInterval(updateTime, 500);
-
-seekEl.oninput = () => { 
-  tracks[currentTrack].currentTime = (seekEl.value / 100) * tracks[currentTrack].duration; 
-};
-
-// --- VOLUME ---
-volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
-
-function toggleMute() {
-  tracks[currentTrack].muted = !tracks[currentTrack].muted;
-  document.getElementById("muteUnmute").textContent = tracks[currentTrack].muted ? "🔇 Muted (M)" : "🔊 Volume (M)";
-}
-document.getElementById("muteUnmute").onclick = toggleMute;
-
-// --- AUTO NEXT / AUTOPLAY ---
-tracks.forEach(track => {
-  track.addEventListener("ended", () => {
-    if (repeatMode === "single") {
-      playTrack(currentTrack);
-    } else if (autoplay && currentTrack < tracks.length - 1) {
-      playTrack(currentTrack + 1);
-    } else if (repeatMode === "all" && autoplay) {
-      playTrack(0);
+    function loadTrack(index) {
+      const track = playlist[index];
+      playlist.forEach(t => t.classList.remove("active"));
+      track.classList.add("active");
+      player.src = track.getAttribute("data-src");
+      currentTrack.textContent = track.textContent;
+      if (autoplayEnabled) player.play().catch(() => {});
     }
-    updatePlayPauseButton();
-  });
-});
 
-// --- START FIRST TRACK ---
-highlight();
-if (autoplay) playTrack(0); // ✅ start automatically
+    playlist.forEach((track, index) => {
+      track.addEventListener("click", () => {
+        currentIndex = index;
+        loadTrack(currentIndex);
+      });
+    });
 
-// --- KEYBOARD SHORTCUTS ---
-document.addEventListener("keydown", (e) => {
-  switch (e.key) {
-    case " ": togglePlayPause(); e.preventDefault(); break; 
-    case "ArrowLeft": document.getElementById("prev").click(); break;
-    case "ArrowRight": document.getElementById("next").click(); break;
-    case "s": case "S": document.getElementById("stop").click(); break;
-    case "r": case "R": document.getElementById("repeat").click(); break;
-    case "t": case "T": document.getElementById("theme").click(); break;
-    case "m": case "M": document.getElementById("muteUnmute").click(); break;
-  }
-});
-</script>
+    player.addEventListener("ended", () => {
+      currentIndex = (currentIndex + 1) % playlist.length;
+      loadTrack(currentIndex);
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key.toLowerCase() === "a") {
+        autoplayEnabled = !autoplayEnabled;
+        alert("Autoplay " + (autoplayEnabled ? "Enabled" : "Disabled"));
+      }
+    });
+
+    // Start first track automatically
+    window.addEventListener("load", () => {
+      loadTrack(0);
+    });
+  </script>
 </body>
 </html>
