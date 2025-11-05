@@ -102,7 +102,7 @@
   <button id="stop">⏹️ Stop (S)</button>
   <button id="next">⏭️ Next (→)</button>
   <button id="repeat">Repeat: Off (R)</button>
-  <button id="autoplay">Autoplay: Off (A)</button>
+  <button id="autoplay">Autoplay: On (A)</button>
   <button id="theme">☀️ Light Mode (T)</button>
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
@@ -166,7 +166,7 @@ const tracks = trackFiles.map(file => {
 
 let currentTrack = 0;
 let repeatMode = "off";
-let autoplayEnabled = false;
+let autoplayEnabled = true;
 
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
