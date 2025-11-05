@@ -3,17 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SJIAP 2026 Audio System</title>
+<title>Audio Playlist</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #e8f5e9; /* light green background */
-    color: #1b5e20; /* dark green text */
+    font-family: 'Times New Roman', serif;
+    background: #e8f5e9;
+    color: #1b5e20;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
   }
   .dark { 
     background: #1b5e20; 
@@ -22,16 +19,51 @@
   header {
     text-align: center;
     padding: 15px;
-    background: #43a047; /* green header */
+    background: #43a047;
     color: white;
     font-size: 1.4em;
   }
-  #playlist {
-    flex: 1;
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    background: #a5d6a7;
+    z-index: 10;
+    border-bottom: 2px solid #388e3c;
+  }
+  button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #66bb6a;
+    color: white;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  button:hover { 
+    background: #388e3c;
+  }
+  #seek, #volume {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+  }
+  #time, #volumeLabel {
+    text-align: center;
+    display: block;
+    margin-bottom: 10px;
+  }
+  ul {
     list-style: none;
     padding: 0;
     margin: 10px;
-    max-height: 350px;
+    max-height: 300px;
     overflow-y: auto;
     background: #a5d6a7;
     border: 1px solid #388e3c;
@@ -54,42 +86,6 @@
     padding: 4px 6px; 
     border-radius: 4px; 
   }
-  #seek, #volume {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-  }
-  #time, #volumeLabel {
-    text-align: center;
-    display: block;
-    margin-bottom: 10px;
-  }
-  #controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    background: #a5d6a7;
-    border-top: 2px solid #388e3c;
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-  }
-  button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #66bb6a;
-    color: white;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-  button:hover { 
-    background: #388e3c;
-  }
   @media (max-width: 600px) {
     header { font-size: 1.1em; }
     button { flex: 1 1 45%; font-size: 13px; }
@@ -98,15 +94,7 @@
 </style>
 </head>
 <body>
-<header>🎵 SJIAP 2026 Audio System 🎵</header>
-
-<ul id="playlist"></ul>
-
-<input type="range" id="seek" value="0" min="0" max="100">
-<span id="time">0:00 / 0:00</span>
-
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-<span id="volumeLabel">Volume</span>
+<header>🎵 Audio Playlist 🎵</header>
 
 <div id="controls">
   <button id="prev">⏮️ Prev (←)</button>
@@ -114,12 +102,20 @@
   <button id="stop">⏹️ Stop (S)</button>
   <button id="next">⏭️ Next (→)</button>
   <button id="repeat">Repeat: Off (R)</button>
+  <button id="autoplay">Autoplay: Off (A)</button>
   <button id="theme">☀️ Light Mode (T)</button>
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
 
+<input type="range" id="seek" value="0" min="0" max="100">
+<span id="time">0:00 / 0:00</span>
+
+<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+<span id="volumeLabel">Volume</span>
+
+<ul id="playlist"></ul>
+
 <script>
-// --- TRACKS SETUP ---
 const baseURL = "./Audio/";
 const trackFiles = [
   "0_Right_Marker_March_in.mp3",
@@ -162,7 +158,6 @@ const trackTitles = [
   "(16) Auld Lang Syne"
 ];
 
-// --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
   audio.preload = "auto";
@@ -171,13 +166,13 @@ const tracks = trackFiles.map(file => {
 
 let currentTrack = 0;
 let repeatMode = "off";
+let autoplayEnabled = false;
 
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 const volumeEl = document.getElementById("volume");
 
-// --- CREATE PLAYLIST ---
 tracks.forEach((track, i) => {
   const li = document.createElement("li");
   li.textContent = trackTitles[i];
@@ -213,7 +208,6 @@ function updatePlayPauseButton(){
   btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
 }
 
-// --- CONTROLS ---
 document.getElementById("playPause").onclick = togglePlayPause;
 document.getElementById("stop").onclick = () => { 
   tracks[currentTrack].pause(); 
@@ -227,6 +221,11 @@ document.getElementById("repeat").onclick = function(){
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
+};
+
+document.getElementById("autoplay").onclick = function(){
+  autoplayEnabled = !autoplayEnabled;
+  this.textContent = autoplayEnabled ? "Autoplay: On (A)" : "Autoplay: Off (A)";
 };
 
 document.getElementById("theme").onclick = function() {
@@ -261,9 +260,15 @@ document.getElementById("muteUnmute").onclick = toggleMute;
 
 tracks.forEach(track => {
   track.addEventListener("ended", () => {
-    if(repeatMode==="single"){ playTrack(currentTrack); }
-    else if(currentTrack<tracks.length-1){ playTrack(currentTrack+1); }
-    else if(repeatMode==="all"){ playTrack(0); }
+    if(repeatMode==="single"){ 
+      playTrack(currentTrack); 
+    }
+    else if(autoplayEnabled && currentTrack<tracks.length-1){ 
+      playTrack(currentTrack+1); 
+    }
+    else if(autoplayEnabled && repeatMode==="all"){ 
+      playTrack(0); 
+    }
     updatePlayPauseButton();
   });
 });
@@ -277,6 +282,7 @@ document.addEventListener("keydown", (e) => {
     case "ArrowRight": document.getElementById("next").click(); break;
     case "s": case "S": document.getElementById("stop").click(); break;
     case "r": case "R": document.getElementById("repeat").click(); break;
+    case "a": case "A": document.getElementById("autoplay").click(); break;
     case "t": case "T": document.getElementById("theme").click(); break;
     case "m": case "M": document.getElementById("muteUnmute").click(); break;
   }
