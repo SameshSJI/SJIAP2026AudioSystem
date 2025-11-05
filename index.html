@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio Playlist</title>
+<title>SJIAP 2026 Audio System</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -11,6 +11,9 @@
     color: #1b5e20; /* dark green text */
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
   .dark { 
     background: #1b5e20; 
@@ -23,49 +26,14 @@
     color: white;
     font-size: 1.4em;
   }
-  #controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    position: sticky; /* keeps controls visible while scrolling */
-    top: 0;
-    background: #a5d6a7; /* light green background for controls */
-    z-index: 10;
-    border-bottom: 2px solid #388e3c;
-  }
-  button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #66bb6a; /* green buttons */
-    color: white;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-  button:hover { 
-    background: #388e3c; /* darker green on hover */
-  }
-  #seek, #volume {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-  }
-  #time, #volumeLabel {
-    text-align: center;
-    display: block;
-    margin-bottom: 10px;
-  }
-  ul {
+  #playlist {
+    flex: 1;
     list-style: none;
     padding: 0;
     margin: 10px;
-    max-height: 300px; /* mini-scrollable playlist section */
+    max-height: 350px;
     overflow-y: auto;
-    background: #a5d6a7; /* light green playlist */
+    background: #a5d6a7;
     border: 1px solid #388e3c;
     border-radius: 8px;
   }
@@ -86,6 +54,42 @@
     padding: 4px 6px; 
     border-radius: 4px; 
   }
+  #seek, #volume {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+  }
+  #time, #volumeLabel {
+    text-align: center;
+    display: block;
+    margin-bottom: 10px;
+  }
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: #a5d6a7;
+    border-top: 2px solid #388e3c;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #66bb6a;
+    color: white;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  button:hover { 
+    background: #388e3c;
+  }
   @media (max-width: 600px) {
     header { font-size: 1.1em; }
     button { flex: 1 1 45%; font-size: 13px; }
@@ -94,7 +98,15 @@
 </style>
 </head>
 <body>
-<header>🎵 Audio Playlist 🎵</header>
+<header>🎵 SJIAP 2026 Audio System 🎵</header>
+
+<ul id="playlist"></ul>
+
+<input type="range" id="seek" value="0" min="0" max="100">
+<span id="time">0:00 / 0:00</span>
+
+<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+<span id="volumeLabel">Volume</span>
 
 <div id="controls">
   <button id="prev">⏮️ Prev (←)</button>
@@ -105,14 +117,6 @@
   <button id="theme">☀️ Light Mode (T)</button>
   <button id="muteUnmute">🔊 Volume (M)</button>
 </div>
-
-<input type="range" id="seek" value="0" min="0" max="100">
-<span id="time">0:00 / 0:00</span>
-
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-<span id="volumeLabel">Volume</span>
-
-<ul id="playlist"></ul>
 
 <script>
 // --- TRACKS SETUP ---
@@ -161,7 +165,7 @@ const trackTitles = [
 // --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "auto"; // preload all for smoother playback
+  audio.preload = "auto";
   return audio;
 });
 
@@ -173,7 +177,7 @@ const seekEl = document.getElementById("seek");
 const timeEl = document.getElementById("time");
 const volumeEl = document.getElementById("volume");
 
-// --- CREATE PLAYLIST UI ---
+// --- CREATE PLAYLIST ---
 tracks.forEach((track, i) => {
   const li = document.createElement("li");
   li.textContent = trackTitles[i];
@@ -182,14 +186,12 @@ tracks.forEach((track, i) => {
   playlistEl.appendChild(li);
 });
 
-// --- HIGHLIGHT FUNCTION ---
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
     el.classList.toggle("current", i===currentTrack);
   });
 }
 
-// --- PLAY/PAUSE ---
 function playTrack(i){
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
@@ -221,20 +223,17 @@ document.getElementById("stop").onclick = () => {
 document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
 document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
 
-// --- REPEAT ---
 document.getElementById("repeat").onclick = function(){
   if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
   else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
   else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
 };
 
-// --- THEME SWITCH ---
 document.getElementById("theme").onclick = function() {
   document.body.classList.toggle("dark");
   this.textContent = document.body.classList.contains("dark") ? "🌙 Dark Mode (T)" : "☀️ Light Mode (T)";
 };
 
-// --- SEEK BAR ---
 function updateTime(){
   const audio = tracks[currentTrack];
   if(audio.duration > 0){
@@ -252,7 +251,6 @@ seekEl.oninput = () => {
   tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; 
 };
 
-// --- VOLUME ---
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
 function toggleMute(){
@@ -261,7 +259,6 @@ function toggleMute(){
 }
 document.getElementById("muteUnmute").onclick = toggleMute;
 
-// --- AUTO NEXT ---
 tracks.forEach(track => {
   track.addEventListener("ended", () => {
     if(repeatMode==="single"){ playTrack(currentTrack); }
@@ -271,13 +268,11 @@ tracks.forEach(track => {
   });
 });
 
-// --- START FIRST TRACK ---
 highlight();
 
-// --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
   switch(e.key){
-    case " ": togglePlayPause(); e.preventDefault(); break; // Space
+    case " ": togglePlayPause(); e.preventDefault(); break;
     case "ArrowLeft": document.getElementById("prev").click(); break;
     case "ArrowRight": document.getElementById("next").click(); break;
     case "s": case "S": document.getElementById("stop").click(); break;
