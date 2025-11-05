@@ -6,7 +6,7 @@
 <title>Audio Playlist</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: "Times New Roman", Times, serif;
     background: #e8f5e9; /* light green background */
     color: #1b5e20; /* dark green text */
     margin: 0;
@@ -45,6 +45,7 @@
     color: white;
     font-weight: bold;
     transition: background 0.2s;
+    font-family: "Times New Roman", Times, serif;
   }
   button:hover { 
     background: #388e3c; /* darker green on hover */
@@ -161,12 +162,13 @@ const trackTitles = [
 // --- AUDIO OBJECTS ---
 const tracks = trackFiles.map(file => {
   const audio = new Audio(baseURL + file);
-  audio.preload = "auto"; // preload all for smoother playback
+  audio.preload = "auto"; 
   return audio;
 });
 
 let currentTrack = 0;
 let repeatMode = "off";
+let autoplay = true; // ✅ autoplay enabled by default
 
 const playlistEl = document.getElementById("playlist");
 const seekEl = document.getElementById("seek");
@@ -185,12 +187,12 @@ tracks.forEach((track, i) => {
 // --- HIGHLIGHT FUNCTION ---
 function highlight() {
   document.querySelectorAll(".track").forEach((el, i) => {
-    el.classList.toggle("current", i===currentTrack);
+    el.classList.toggle("current", i === currentTrack);
   });
 }
 
 // --- PLAY/PAUSE ---
-function playTrack(i){
+function playTrack(i) {
   tracks[currentTrack].pause();
   tracks[currentTrack].currentTime = 0;
   currentTrack = i;
@@ -199,14 +201,14 @@ function playTrack(i){
   updatePlayPauseButton();
 }
 
-function togglePlayPause(){
+function togglePlayPause() {
   const audio = tracks[currentTrack];
-  if(audio.paused) audio.play();
+  if (audio.paused) audio.play();
   else audio.pause();
   updatePlayPauseButton();
 }
 
-function updatePlayPauseButton(){
+function updatePlayPauseButton() {
   const btn = document.getElementById("playPause");
   btn.textContent = tracks[currentTrack].paused ? "▶️ Play (Space)" : "⏸️ Pause (Space)";
 }
@@ -215,17 +217,17 @@ function updatePlayPauseButton(){
 document.getElementById("playPause").onclick = togglePlayPause;
 document.getElementById("stop").onclick = () => { 
   tracks[currentTrack].pause(); 
-  tracks[currentTrack].currentTime=0; 
+  tracks[currentTrack].currentTime = 0; 
   updatePlayPauseButton(); 
 };
-document.getElementById("prev").onclick = () => { playTrack((currentTrack-1+tracks.length)%tracks.length); };
-document.getElementById("next").onclick = () => { playTrack((currentTrack+1)%tracks.length); };
+document.getElementById("prev").onclick = () => { playTrack((currentTrack - 1 + tracks.length) % tracks.length); };
+document.getElementById("next").onclick = () => { playTrack((currentTrack + 1) % tracks.length); };
 
 // --- REPEAT ---
-document.getElementById("repeat").onclick = function(){
-  if(repeatMode==="off"){ repeatMode="single"; this.textContent="Repeat: Single (R)"; } 
-  else if(repeatMode==="single"){ repeatMode="all"; this.textContent="Repeat: All (R)"; } 
-  else { repeatMode="off"; this.textContent="Repeat: Off (R)"; }
+document.getElementById("repeat").onclick = function() {
+  if (repeatMode === "off") { repeatMode = "single"; this.textContent = "Repeat: Single (R)"; } 
+  else if (repeatMode === "single") { repeatMode = "all"; this.textContent = "Repeat: All (R)"; } 
+  else { repeatMode = "off"; this.textContent = "Repeat: Off (R)"; }
 };
 
 // --- THEME SWITCH ---
@@ -235,49 +237,54 @@ document.getElementById("theme").onclick = function() {
 };
 
 // --- SEEK BAR ---
-function updateTime(){
+function updateTime() {
   const audio = tracks[currentTrack];
-  if(audio.duration > 0){
-    seekEl.value = (audio.currentTime/audio.duration)*100;
+  if (audio.duration > 0) {
+    seekEl.value = (audio.currentTime / audio.duration) * 100;
   }
-  const minCur = Math.floor(audio.currentTime/60);
-  const secCur = Math.floor(audio.currentTime%60).toString().padStart(2,"0");
-  const minDur = Math.floor(audio.duration/60)||0;
-  const secDur = Math.floor(audio.duration%60).toString().padStart(2,"0");
+  const minCur = Math.floor(audio.currentTime / 60);
+  const secCur = Math.floor(audio.currentTime % 60).toString().padStart(2, "0");
+  const minDur = Math.floor(audio.duration / 60) || 0;
+  const secDur = Math.floor(audio.duration % 60).toString().padStart(2, "0");
   timeEl.textContent = `${minCur}:${secCur} / ${minDur}:${secDur}`;
 }
-setInterval(updateTime,500);
+setInterval(updateTime, 500);
 
 seekEl.oninput = () => { 
-  tracks[currentTrack].currentTime = (seekEl.value/100)*tracks[currentTrack].duration; 
+  tracks[currentTrack].currentTime = (seekEl.value / 100) * tracks[currentTrack].duration; 
 };
 
 // --- VOLUME ---
 volumeEl.oninput = () => tracks[currentTrack].volume = volumeEl.value;
 
-function toggleMute(){
+function toggleMute() {
   tracks[currentTrack].muted = !tracks[currentTrack].muted;
   document.getElementById("muteUnmute").textContent = tracks[currentTrack].muted ? "🔇 Muted (M)" : "🔊 Volume (M)";
 }
 document.getElementById("muteUnmute").onclick = toggleMute;
 
-// --- AUTO NEXT ---
+// --- AUTO NEXT / AUTOPLAY ---
 tracks.forEach(track => {
   track.addEventListener("ended", () => {
-    if(repeatMode==="single"){ playTrack(currentTrack); }
-    else if(currentTrack<tracks.length-1){ playTrack(currentTrack+1); }
-    else if(repeatMode==="all"){ playTrack(0); }
+    if (repeatMode === "single") {
+      playTrack(currentTrack);
+    } else if (autoplay && currentTrack < tracks.length - 1) {
+      playTrack(currentTrack + 1);
+    } else if (repeatMode === "all" && autoplay) {
+      playTrack(0);
+    }
     updatePlayPauseButton();
   });
 });
 
 // --- START FIRST TRACK ---
 highlight();
+if (autoplay) playTrack(0); // ✅ start automatically
 
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
-  switch(e.key){
-    case " ": togglePlayPause(); e.preventDefault(); break; // Space
+  switch (e.key) {
+    case " ": togglePlayPause(); e.preventDefault(); break; 
     case "ArrowLeft": document.getElementById("prev").click(); break;
     case "ArrowRight": document.getElementById("next").click(); break;
     case "s": case "S": document.getElementById("stop").click(); break;
